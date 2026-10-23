@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <h1><i class="fas fa-wheelchair"></i> Welcome to AccessMap</h1>
+        <p>Find accessible facilities in your community. Search, review, and help others by reporting accessibility information.</p>
+        <div class="hero-buttons">
+            <a href="{{ url_for('search') }}" class="btn btn-primary">
+                <i class="fas fa-search"></i> Find Facilities
+            </a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('add_facility') }}" class="btn btn-secondary">
+                    <i class="fas fa-plus"></i> Add Facility
+                </a>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-secondary">
+                    <i class="fas fa-user-plus"></i> Join Community
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<section class="stats-section">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <i class="fas fa-building"></i>
+            <h3>{{ stats.facilities }}</h3>
+            <p>Facilities</p>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-star"></i>
+            <h3>{{ stats.reviews }}</h3>
+            <p>Reviews</p>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-users"></i>
+            <h3>{{ stats.users }}</h3>
+            <p>Contributors</p>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>{{ stats.reports }}</h3>
+            <p>Reports</p>
+        </div>
+    </div>
+</section>
+
+<section class="featured-section">
+    <h2><i class="fas fa-star"></i> Featured Facilities</h2>
+    <div class="facility-grid">
+        {% for facility in facilities %}
+        <div class="facility-card">
+            <div class="facility-header">
+                <span class="category-badge">{{ facility.category }}</span>
+                <span class="rating">
+                    <i class="fas fa-star"></i> {{ "%.1f"|format(facility.average_rating) }}
+                </span>
+            </div>
+            <h3>{{ facility.name }}</h3>
+            <p class="address"><i class="fas fa-map-marker-alt"></i> {{ facility.address }}, {{ facility.city }}</p>
+            <p class="description">{{ facility.description[:100] }}...</p>
+            <div class="accessibility-badges">
+                {% if facility.wheelchair_accessible %}<span class="badge badge-green">♿ Wheelchair</span>{% endif %}
+                {% if facility.has_ramp %}<span class="badge badge-blue">🛗 Ramp</span>{% endif %}
+                {% if facility.has_accessible_toilet %}<span class="badge badge-purple">🚻 Toilet</span>{% endif %}
+                {% if facility.has_elevator %}<span class="badge badge-orange">🛗 Elevator</span>{% endif %}
+                {% if facility.has_accessible_parking %}<span class="badge badge-teal">🅿️ Parking</span>{% endif %}
+            </div>
+            <a href="{{ url_for('facility_detail', facility_id=facility.id) }}" class="btn btn-view">
+                View Details <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

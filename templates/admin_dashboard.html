@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <h1><i class="fas fa-cog"></i> Admin Dashboard</h1>
+
+    <div class="stats-grid">
+        <div class="stat-card"><i class="fas fa-users"></i><h3>{{ stats.users }}</h3><p>Users</p></div>
+        <div class="stat-card"><i class="fas fa-building"></i><h3>{{ stats.facilities }}</h3><p>Facilities</p></div>
+        <div class="stat-card"><i class="fas fa-star"></i><h3>{{ stats.reviews }}</h3><p>Reviews</p></div>
+        <div class="stat-card"><i class="fas fa-exclamation-triangle"></i><h3>{{ stats.reports }}</h3><p>Reports</p></div>
+        <div class="stat-card"><i class="fas fa-clock"></i><h3>{{ stats.pending_reports }}</h3><p>Pending</p></div>
+        <div class="stat-card"><i class="fas fa-comment"></i><h3>{{ stats.feedbacks }}</h3><p>Feedback</p></div>
+    </div>
+
+    <div class="admin-section">
+        <h2><i class="fas fa-users"></i> User Management</h2>
+        <table class="admin-table">
+            <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ 'Admin' if user.is_admin else 'User' }}</td>
+                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="admin-section">
+        <h2><i class="fas fa-exclamation-triangle"></i> Report Management</h2>
+        <table class="admin-table">
+            <thead><tr><th>ID</th><th>Facility</th><th>Issue</th><th>Reported By</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ report.id }}</td>
+                    <td>{{ report.facility.name }}</td>
+                    <td>{{ report.issue_type }}</td>
+                    <td>{{ report.user.username }}</td>
+                    <td><span class="status-badge status-{{ report.status|lower|replace(' ', '-') }}">{{ report.status }}</span></td>
+                    <td>
+                        <select onchange="updateReportStatus({{ report.id }}, this.value)">
+                            <option value="Pending" {% if report.status == 'Pending' %}selected{% endif %}>Pending</option>
+                            <option value="In Progress" {% if report.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                            <option value="Resolved" {% if report.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                        </select>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="admin-section">
+        <h2><i class="fas fa-comment-dots"></i> User Feedback</h2>
+        <table class="admin-table">
+            <thead><tr><th>ID</th><th>User</th><th>Subject</th><th>Message</th><th>Date</th></tr></thead>
+            <tbody>
+                {% for fb in feedbacks %}
+                <tr>
+                    <td>{{ fb.id }}</td>
+                    <td>{{ fb.user.username }}</td>
+                    <td>{{ fb.subject }}</td>
+                    <td>{{ fb.message[:80] }}...</td>
+                    <td>{{ fb.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateReportStatus(reportId, status) {
+    fetch('/api/report/' + reportId, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: status})
+    })
+    .then(r => r.json())
+    .then(data => { if (data.success) location.reload(); });
+}
+</script>
+{% endblock %}

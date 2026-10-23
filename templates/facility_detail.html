@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}{{ facility.name }}{% endblock %}
+
+{% block content %}
+<div class="facility-detail-page">
+    <div class="facility-detail-header">
+        <div>
+            <span class="category-badge">{{ facility.category }}</span>
+            <h1>{{ facility.name }}</h1>
+            <p class="address"><i class="fas fa-map-marker-alt"></i> {{ facility.address }}, {{ facility.city }}</p>
+            <p class="rating-large"><i class="fas fa-star"></i> {{ "%.1f"|format(facility.average_rating) }} / 5.0</p>
+        </div>
+        <div class="header-actions">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('report_issue', facility_id=facility.id) }}" class="btn btn-warning">
+                    <i class="fas fa-exclamation-triangle"></i> Report Issue
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="facility-detail-grid">
+        <div class="detail-main">
+            <div class="detail-card">
+                <h2><i class="fas fa-info-circle"></i> About</h2>
+                <p>{{ facility.description or 'No description available.' }}</p>
+            </div>
+
+            <div class="detail-card">
+                <h2><i class="fas fa-wheelchair"></i> Accessibility Features</h2>
+                <div class="features-grid">
+                    <div class="feature {% if facility.wheelchair_accessible %}available{% else %}unavailable{% endif %}">
+                        <i class="fas fa-{{ 'check' if facility.wheelchair_accessible else 'times' }}"></i>
+                        Wheelchair Accessible
+                    </div>
+                    <div class="feature {% if facility.has_ramp %}available{% else %}unavailable{% endif %}">
+                        <i class="fas fa-{{ 'check' if facility.has_ramp else 'times' }}"></i>
+                        Ramp Available
+                    </div>
+                    <div class="feature {% if facility.has_accessible_toilet %}available{% else %}unavailable{% endif %}">
+                        <i class="fas fa-{{ 'check' if facility.has_accessible_toilet else 'times' }}"></i>
+                        Accessible Toilet
+                    </div>
+                    <div class="feature {% if facility.has_elevator %}available{% else %}unavailable{% endif %}">
+                        <i class="fas fa-{{ 'check' if facility.has_elevator else 'times' }}"></i>
+                        Elevator
+                    </div>
+                    <div class="feature {% if facility.has_accessible_parking %}available{% else %}unavailable{% endif %}">
+                        <i class="fas fa-{{ 'check' if facility.has_accessible_parking else 'times' }}"></i>
+                        Accessible Parking
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-card">
+                <h2><i class="fas fa-map"></i> Location</h2>
+                <div id="map" style="height: 350px; border-radius: 12px;"></div>
+            </div>
+
+            <div class="detail-card">
+                <h2><i class="fas fa-comments"></i> Community Reviews ({{ reviews|length }})</h2>
+                
+                {% if current_user.is_authenticated %}
+                <form id="reviewForm" class="review-form">
+                    <div class="form-group">
+                        <label>Your Rating</label>
+                        <div class="star-rating">
+                            {% for i in range(1, 6) %}
+                                <input type="radio" name="rating" value="{{ i }}" id="star{{ i }}" {% if i == 5 %}checked{% endif %}>
+                                <label for="star{{ i }}"><i class="fas fa-star"></i></label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <textarea id="reviewComment" placeholder="Share your experience..." rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Review</button>
+                </form>
+                {% else %}
+                    <p><a href="{{ url_for('login') }}">Login</a> to leave a review.</p>
+                {% endif %}
+
+                <div id="reviewsList" class="reviews-list">
+                    {% for review in reviews %}
+                    <div class="review-item">
+                        <div class="review-header">
+                            <strong><i class="fas fa-user-circle"></i> {{ review.user.username }}</strong>
+                            <span class="review-rating">
+                                {% for i in range(review.rating) %}<i class="fas fa-star"></i>{% endfor %}
+                            </span>
+                            <span class="review-date">{{ review.created_at.strftime('%Y-%m-%d') }}</span>
+                        </div>
+                        <p>{{ review.comment }}</p>
+                    </div>
+                    {% else %}
+                    <p class="no-reviews">No reviews yet. Be the first to review!</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-sidebar">
+            <div class="detail-card">
+                <h3><i class="fas fa-map-marker-alt"></i> Coordinates</h3>
+                <p>Latitude: {{ facility.latitude }}</p>
+                <p>Longitude: {{ facility.longitude }}</p>
+            </div>
+            <div class="detail-card">
+                <h3><i class="fas fa-calendar"></i> Added On</h3>
+                <p>{{ facility.created_at.strftime('%B %d, %Y') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var map = L.map('map').setView([{{ facility.latitude or 20.5937 }}, {{ facility.longitude or 78.9629 }}], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    L.marker([{{ facility.latitude or 20.5937 }}, {{ facility.longitude or 78.9629 }}])
+        .addTo(map)
+        .bindPopup('<b>{{ facility.name }}</b><br>{{ facility.address }}')
+        .openPopup();
+
+    document.getElementById('reviewForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var rating = document.querySelector('input[name="rating"]:checked').value;
+        var comment = document.getElementById('reviewComment').value;
+        
+        fetch('/api/reviews/{{ facility.id }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({rating: parseInt(rating), comment: comment})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Error submitting review');
+            }
+        });
+    });
+</script>
+{% endblock %}

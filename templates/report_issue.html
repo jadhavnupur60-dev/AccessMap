@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Report Issue{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <h1><i class="fas fa-exclamation-triangle"></i> Report Accessibility Issue</h1>
+    <p class="form-subtitle">Facility: <strong>{{ facility.name }}</strong></p>
+    
+    <form method="POST" class="facility-form">
+        <div class="form-group">
+            <label>Issue Type *</label>
+            <select name="issue_type" required>
+                <option value="">Select issue type</option>
+                <option>Broken Ramp</option>
+                <option>Blocked Wheelchair Access</option>
+                <option>Elevator Not Working</option>
+                <option>Inaccessible Toilet</option>
+                <option>Missing Handrails</option>
+                <option>Obstruction in Path</option>
+                <option>Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Description *</label>
+            <textarea name="description" rows="5" required placeholder="Describe the issue in detail..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-warning btn-lg">
+            <i class="fas fa-paper-plane"></i> Submit Report
+        </button>
+    </form>
+</div>
+{% endblock %}

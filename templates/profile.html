@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <h1><i class="fas fa-user-circle"></i> My Profile</h1>
+    
+    <div class="profile-info">
+        <p><strong>Username:</strong> {{ current_user.username }}</p>
+        <p><strong>Email:</strong> {{ current_user.email }}</p>
+        <p><strong>Role:</strong> {{ 'Administrator' if current_user.is_admin else 'Community Member' }}</p>
+        <p><strong>Member Since:</strong> {{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+    </div>
+
+    <div class="profile-section">
+        <h2><i class="fas fa-star"></i> My Reviews ({{ reviews|length }})</h2>
+        {% for review in reviews %}
+        <div class="review-item">
+            <strong>{{ review.facility.name }}</strong>
+            <span>{% for i in range(review.rating) %}<i class="fas fa-star"></i>{% endfor %}</span>
+            <p>{{ review.comment }}</p>
+        </div>
+        {% else %}
+        <p>You haven't written any reviews yet.</p>
+        {% endfor %}
+    </div>
+
+    <div class="profile-section">
+        <h2><i class="fas fa-exclamation-triangle"></i> My Reports ({{ reports|length }})</h2>
+        {% for report in reports %}
+        <div class="review-item">
+            <strong>{{ report.facility.name }}</strong> - {{ report.issue_type }}
+            <span class="status-badge status-{{ report.status|lower|replace(' ', '-') }}">{{ report.status }}</span>
+            <p>{{ report.description }}</p>
+        </div>
+        {% else %}
+        <p>You haven't submitted any reports yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
